@@ -37,6 +37,30 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
+    if event.message.mention != None and event.message.mention.mentionees[0].is_self:
+        # split by empty space and trim each text
+        split_text = [text.strip() for text in event.message.text.split(' ') if text.strip() != '']
+        app.logger.info("split_text: " + str(split_text))
+        return reply_greeting_message(event)
+    else:
+        app.logger.info("Not tag bot, repeat message")
+        return reply_repeat_message(event)
+        
+def reply_greeting_message(event):
+    with ApiClient(configuration=line_bot_configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        line_bot_api.reply_message_with_http_info(
+            ReplyMessageRequest(
+                reply_token=event.reply_token,
+                messages=[TextMessage(text="閉嘴")]
+            )
+        )
+
+    app.logger.info("Replied message: 閉嘴")
+
+    return 'OK'
+
+def reply_repeat_message(event):
     with ApiClient(configuration=line_bot_configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
         line_bot_api.reply_message_with_http_info(
