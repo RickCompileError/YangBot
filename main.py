@@ -3,9 +3,11 @@ import os
 from flask import Flask, abort, request
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.messaging import (ApiClient, Configuration, MessagingApi,
-                                  ReplyMessageRequest, TextMessage)
+from linebot.v3.messaging import Configuration
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
+
+from handlers.message_handlers import (handle_tag_bot_message,
+                                       reply_repeat_message)
 
 app = Flask(__name__)
 app.logger.setLevel(os.getenv('LOG_LEVEL', 'INFO').upper())
@@ -41,38 +43,10 @@ def handle_message(event):
         # split by empty space and trim each text
         split_text = [text.strip() for text in event.message.text.split(' ') if text.strip() != '']
         app.logger.info("split_text: " + str(split_text))
-        return reply_greeting_message(event)
+        return handle_tag_bot_message(event, split_text, line_bot_configuration, app)
     else:
         app.logger.info("Not tag bot, repeat message")
-        return reply_repeat_message(event)
-        
-def reply_greeting_message(event):
-    with ApiClient(configuration=line_bot_configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[TextMessage(text="閉嘴")]
-            )
-        )
-
-    app.logger.info("Replied message: 閉嘴")
-
-    return 'OK'
-
-def reply_repeat_message(event):
-    with ApiClient(configuration=line_bot_configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[TextMessage(text=event.message.text)]
-            )
-        )
-
-    app.logger.info("Replied message: " + event.message.text)
-
-    return 'OK'
+        return reply_repeat_message(event, line_bot_configuration, app)
 
 # Hello World entry point
 @app.route("/")
