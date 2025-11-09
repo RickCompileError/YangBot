@@ -1,13 +1,16 @@
 import os
+from datetime import datetime
 
 from flask import Flask, abort, request
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
+from linebot.v3.webhooks import MessageEvent, PostbackEvent, TextMessageContent
 
-from handlers.message_handlers import (handle_tag_bot_message,
-                                       reply_repeat_message)
+# Initialize Firestore
+from database.task_operations import create_task
+from handlers.message_handlers import handle_tag_bot_message
+from handlers.postback_handlers import handle_set_task_datetime_postback
 
 app = Flask(__name__)
 app.logger.setLevel(os.getenv('LOG_LEVEL', 'INFO').upper())
@@ -39,6 +42,7 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
+    # Check if the bot is mentioned
     if event.message.mention != None and event.message.mention.mentionees[0].is_self:
         # split by empty space and trim each text
         split_text = [text.strip() for text in event.message.text.split(' ') if text.strip() != '']
@@ -46,7 +50,11 @@ def handle_message(event):
         return handle_tag_bot_message(event, split_text, line_bot_configuration, app)
     else:
         app.logger.info("Not tag bot, repeat message")
-        return reply_repeat_message(event, line_bot_configuration, app)
+
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    if event.postback.data.startswith("taskId="):
+        return handle_set_task_datetime_postback(event, line_bot_configuration, app)
 
 # Hello World entry point
 @app.route("/")

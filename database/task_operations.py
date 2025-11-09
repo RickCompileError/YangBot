@@ -5,15 +5,16 @@ from .firestore_operations import (delete_data, query_data, read_data,
 
 COLLECTION_NAME = "Task"
 
-def create_task(source_id, notify_id, is_notify, expire_date):
+def create_task(message, source_id, notified_id, is_notified, expire_date):
     """
     Create a new Task document in Firestore.
 
+    :param message: Task message/content
     :param source_id: Source identifier
-    :param notify_id: Notification identifier
-    :param is_notify: Boolean indicating if notification is enabled
+    :param notified_id: Notification identifier
+    :param is_notified: Boolean indicating if notification is enabled
     :param expire_date: Expiration date (datetime object or ISO string)
-    :return: True if successful, False otherwise
+    :return: Created Task document ID
     """
     try:
         # Convert expire_date to string if it's a datetime
@@ -21,16 +22,16 @@ def create_task(source_id, notify_id, is_notify, expire_date):
             expire_date = expire_date.isoformat()
 
         data = {
+            "message": message,
             "sourceId": source_id,
-            "notifyId": notify_id,
-            "isNotify": is_notify,
+            "notifiedId": notified_id,
+            "isNotified": is_notified,
             "expireDate": expire_date
         }
-        write_data(COLLECTION_NAME, None, data)
-        return True
+        return write_data(COLLECTION_NAME, None, data)
     except Exception as e:
         print(f"Error creating task: {e}")
-        return False
+        return None
 
 
 def get_task(task_id):
@@ -52,7 +53,7 @@ def update_task(task_id, updates):
     """
     try:
         # Validate that updates only include valid fields
-        valid_fields = {"sourceId", "notifyId", "isNotify", "expireDate"}
+        valid_fields = {"message", "sourceId", "notifiedId", "isNotified", "expireDate"}
         filtered_updates = {k: v for k, v in updates.items() if k in valid_fields}
 
         if not filtered_updates:
@@ -105,14 +106,14 @@ def get_all_tasks():
         print(f"Error retrieving all tasks: {e}")
         return []
 
-def get_tasks_by_is_notify(is_notify):
+def get_tasks_by_is_notified(is_notified):
     """
-    Retrieve tasks filtered by isNotify status.
+    Retrieve tasks filtered by isNotified status.
 
-    :param is_notify: Boolean value to filter by
+    :param is_notified: Boolean value to filter by
     :return: List of task dictionaries
     """
-    return query_data(COLLECTION_NAME, "isNotify", "==", is_notify)
+    return query_data(COLLECTION_NAME, "isNotified", "==", is_notified)
 
 def get_expired_tasks():
     """

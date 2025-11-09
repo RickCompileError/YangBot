@@ -18,6 +18,7 @@ def write_data(collection_name, document_id, data):
             doc_ref = db.collection(collection_name).add(data)
             generated_id = doc_ref[1].id
             print(f"Data written to {collection_name}/{generated_id}")
+            return generated_id
     except Exception as e:
         print(f"Error writing data: {e}")
         return None
