@@ -1,6 +1,7 @@
 from datetime import datetime
 from urllib.parse import parse_qs
 
+import pytz
 from linebot.v3.messaging import (ApiClient, MessagingApi, ReplyMessageRequest,
                                   TextMessage)
 
@@ -27,8 +28,9 @@ def handle_set_task_datetime_postback(event, line_bot_configuration, app):
 
         task_id = params['taskId'][0]
 
-        # Convert string to datetime object
-        selected_datetime = datetime.fromisoformat(event.postback.params['datetime'])
+        # Convert string to datetime object with utc+8
+        utc_8 = pytz.timezone('Asia/Taipei')
+        selected_datetime = datetime.fromisoformat(event.postback.params['datetime']).astimezone(utc_8)
 
         # Update the task in Firestore
         updates = {"expireDate": selected_datetime}

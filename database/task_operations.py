@@ -1,5 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
+import pytz
+from google.cloud import firestore
+
+from .firestore_init import db
 from .firestore_operations import (delete_data, query_data, read_data,
                                    update_data, write_data)
 
@@ -13,14 +17,10 @@ def create_task(message, source_id, notified_id, is_notified, expire_date):
     :param source_id: Source identifier
     :param notified_id: Notification identifier
     :param is_notified: Boolean indicating if notification is enabled
-    :param expire_date: Expiration date (datetime object or ISO string)
+    :param expire_date: Expiration date (datetime object only)
     :return: Created Task document ID
     """
     try:
-        # Convert expire_date to string if it's a datetime
-        if isinstance(expire_date, datetime):
-            expire_date = expire_date.isoformat()
-
         data = {
             "message": message,
             "sourceId": source_id,
@@ -59,10 +59,6 @@ def update_task(task_id, updates):
         if not filtered_updates:
             print("No valid fields to update")
             return False
-
-        # Convert expire_date if it's a datetime
-        if "expireDate" in filtered_updates and isinstance(filtered_updates["expireDate"], datetime):
-            filtered_updates["expireDate"] = filtered_updates["expireDate"].isoformat()
 
         update_data(COLLECTION_NAME, task_id, filtered_updates)
         return True
@@ -135,3 +131,29 @@ def get_tasks_by_source_id(source_id):
     :return: List of task dictionaries
     """
     return query_data(COLLECTION_NAME, "sourceId", "==", source_id)
+
+def get_notify_tasks():
+    """
+    Retrieve tasks that need notification (expireDate within next day and isNotified is False).
+    The timestamp range is from (now + 1 day - 1 minute) to (now + 1 day).
+
+    :return: List of task dictionaries
+    """
+    utc_8 = pytz.timezone('Asia/Taipei')
+    one_day_from_now = datetime.now(utc_8) + timedelta(days=1)
+    one_day_minus_one_minute = one_day_from_now - timedelta(minutes=1)
+
+    tasks_ref = db.collection(COLLECTION_NAME)
+    results = tasks_ref.where(
+        filter=firestore.FieldFilter("expireDate", ">=", one_day_minus_one_minute)
+    ).where(
+        filter=firestore.FieldFilter("expireDate", "<", one_day_from_now)
+    ).where(
+        filter=firestore.FieldFilter("isNotified", "==", False)
+    ).stream()
+
+    docs = []
+    for doc in results:
+        docs.append({**doc.to_dict(), 'id': doc.id})
+
+    return docs
