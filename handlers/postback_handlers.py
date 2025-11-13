@@ -6,6 +6,7 @@ from linebot.v3.messaging import (ApiClient, MessagingApi, ReplyMessageRequest,
                                   TextMessage)
 
 from database.task_operations import get_task, update_task
+from handlers.message_handlers import reply_task_created_message
 
 
 def handle_set_task_datetime_postback(event, line_bot_configuration, app):
@@ -37,6 +38,8 @@ def handle_set_task_datetime_postback(event, line_bot_configuration, app):
         success = update_task(task_id, updates)
         message = get_task(task_id)['message']
 
+        reply_task_created_message(event, get_task(task_id), line_bot_configuration)
+
         if success:
             # Mandarin reply
             reply_text = f"任務 [{message}] 的到期時間已設定為 {selected_datetime.strftime('%Y-%m-%d %H:%M')}。"
@@ -46,15 +49,5 @@ def handle_set_task_datetime_postback(event, line_bot_configuration, app):
     except Exception as e:
         app.logger.error(f"Error handling set task datetime postback: {e}")
         reply_text = "設定提醒時間時發生錯誤，請稍後再試。"
-
-    # Reply to the user
-    with ApiClient(configuration=line_bot_configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[TextMessage(text=reply_text)]
-            )
-        )
 
     return 'OK'

@@ -44,6 +44,6 @@ def check_and_notify_tasks():
 
     line_bot_configuration = Configuration(access_token=get_settings().line_channel_access_token)
     for task in tasks:
-        state = send_notification_push_message(task['notifiedId'], task['message'], line_bot_configuration, app)
+        state = send_notification_push_message(task, line_bot_configuration)
         if state == 'OK':
             update_task(task['id'], {'isNotified': True})
