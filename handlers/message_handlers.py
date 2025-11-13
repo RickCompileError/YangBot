@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from linebot.v3.messaging import (ApiClient, ButtonsTemplate, Configuration,
-                                  DatetimePickerAction, MessageAction,
-                                  MessagingApi, ReplyMessageRequest,
+from linebot.v3.messaging import (ApiClient, ButtonsTemplate,
+                                  DatetimePickerAction, MessagingApi,
+                                  PushMessageRequest, ReplyMessageRequest,
                                   TemplateMessage, TextMessage)
 
 from database.task_operations import create_task
@@ -53,3 +53,16 @@ def get_group_or_room_id(source):
     elif source.type == "room":
         return source.room_id
     return None
+
+def send_notification_push_message(to, message, line_bot_configuration, app):
+    with ApiClient(configuration=line_bot_configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        line_bot_api.push_message_with_http_info(
+            PushMessageRequest(
+                to=to,
+                messages=[TextMessage(text=message)]
+            )
+        )
+    app.logger.info("Sent notification push message to " + to)
+
+    return 'OK'
