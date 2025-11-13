@@ -4,10 +4,11 @@ from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration
 from linebot.v3.webhooks import MessageEvent, PostbackEvent, TextMessageContent
 
-from handlers.message_handlers import handle_tag_bot_message
+from database.task_operations import get_notify_tasks, update_task
+from handlers.message_handlers import (handle_tag_bot_message,
+                                       send_notification_push_message)
 from handlers.postback_handlers import handle_set_task_datetime_postback
 from utils.config import get_settings
-from utils.scheduler import schedule_task
 
 app = Flask(__name__)
 settings = get_settings()
@@ -50,11 +51,25 @@ def handle_postback(event):
     if event.postback.data.startswith("taskId="):
         return handle_set_task_datetime_postback(event, line_bot_configuration, app)
 
+@app.route("/notify_check", methods=['GET'])
+def notify_check():
+    """Endpoint to manually trigger task notification check."""
+    tasks = get_notify_tasks()
+
+    if len(tasks) == 0:
+        return 'No tasks to notify.'
+
+    for task in tasks:
+        state = send_notification_push_message(task, line_bot_configuration)
+        if state == 'OK':
+            update_task(task['id'], {'isNotified': True})
+
+    return 'OK'
+
 # Hello World entry point
 @app.route("/")
 def hello():
     return "Hello, World!"
 
 if __name__ == "__main__":
-    schedule_task()
     app.run(debug=True, host='0.0.0.0', port=settings.port)

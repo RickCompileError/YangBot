@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime
 
+import pytz
 from linebot.v3.messaging import (ApiClient, ButtonsTemplate,
                                   DatetimePickerAction, FlexContainer,
                                   FlexMessage, MessagingApi,
@@ -113,6 +114,9 @@ def get_flex_message_content_template(task):
         flex_message_content = json.load(f)
         flex_message_content["body"]["contents"][1]["text"] = task['message']
         flex_message_content["body"]["contents"][1]["text"] = task['message']
+        if task['expireDate']:
+            utc_8 = pytz.timezone('Asia/Taipei')
+            task['expireDate'] = task['expireDate'].astimezone(utc_8)
         flex_message_content["body"]["contents"][2]["text"] = task['expireDate'].strftime('%Y-%m-%d %H:%M') if task['expireDate'] else "未設定"
         flex_message_content["body"]["contents"][4]["contents"][1]["text"] = task['id']
 

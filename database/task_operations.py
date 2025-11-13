@@ -80,28 +80,6 @@ def delete_task(task_id):
         print(f"Error deleting task: {e}")
         return False
 
-def get_all_tasks():
-    """
-    Retrieve all Task documents.
-
-    :return: List of task dictionaries
-    """
-    try:
-        # Since query_data requires a where clause, we'll need to get all docs
-        # For Firestore, to get all docs, we can use collection.stream()
-        # But since we have query_data, we might need to adjust
-        # For now, return empty list as placeholder - in practice, you'd need a different approach
-        # Actually, to get all, we can use db.collection(COLLECTION_NAME).stream()
-        # But to keep it simple, let's add a note
-
-        # This is a limitation of the current query_data function
-        # Ideally, extend firestore_operations with a get_all function
-        print("get_all_tasks: To get all tasks, consider extending firestore_operations with get_all_collection")
-        return []
-    except Exception as e:
-        print(f"Error retrieving all tasks: {e}")
-        return []
-
 def get_tasks_by_is_notified(is_notified):
     """
     Retrieve tasks filtered by isNotified status.
@@ -110,18 +88,6 @@ def get_tasks_by_is_notified(is_notified):
     :return: List of task dictionaries
     """
     return query_data(COLLECTION_NAME, "isNotified", "==", is_notified)
-
-def get_expired_tasks():
-    """
-    Retrieve tasks that have expired (expireDate < current time).
-
-    :return: List of expired task dictionaries
-    """
-    # Firestore queries don't support direct comparison with current time
-    # This would require fetching all and filtering client-side, or using server timestamps
-    # For simplicity, return all tasks and note the limitation
-    print("get_expired_tasks: Firestore doesn't support direct current time queries. Consider client-side filtering.")
-    return []
 
 def get_tasks_by_source_id(source_id):
     """
