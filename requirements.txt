@@ -3,3 +3,4 @@ line-bot-sdk
 schedule
 google-cloud-firestore
 pytz
+pydantic-settings

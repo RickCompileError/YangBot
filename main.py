@@ -1,27 +1,21 @@
-import os
-from datetime import datetime
-
 from flask import Flask, abort, request
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration
 from linebot.v3.webhooks import MessageEvent, PostbackEvent, TextMessageContent
 
-# Initialize Firestore
-from database.task_operations import create_task
 from handlers.message_handlers import handle_tag_bot_message
 from handlers.postback_handlers import handle_set_task_datetime_postback
+from utils.config import get_settings
+from utils.scheduler import schedule_task
 
 app = Flask(__name__)
-app.logger.setLevel(os.getenv('LOG_LEVEL', 'INFO').upper())
+settings = get_settings()
 
-# your channel access token
-channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', '6wz47KLG3CbbEFRoj6/sOyt7zlSoyPMmFLgv0pTInBumDdcghwm8+DifFykaj4u2ZufP21x7wMfrb6ASoj//lI9zyA1R04olsOPmkNlN4I2ue88DWgRvGaoreg9ZbYmUtE40ike7iMQQzsBB5J9rtQdB04t89/1O/w1cDnyilFU=')
-# your channel secret key
-channel_secret = os.getenv('LINE_CHANNEL_SECRET', '3aa09f4c3f60bf08489f8cae16896a4d')
+app.logger.setLevel(settings.log_level.upper())
 
-line_bot_configuration = Configuration(access_token=channel_access_token)
-handler = WebhookHandler(channel_secret)
+line_bot_configuration = Configuration(access_token=settings.line_channel_access_token)
+handler = WebhookHandler(settings.line_channel_secret)
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -62,5 +56,5 @@ def hello():
     return "Hello, World!"
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 8080))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    schedule_task()
+    app.run(debug=True, host='0.0.0.0', port=settings.port)
