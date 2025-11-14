@@ -1,6 +1,5 @@
 import json
 import logging
-from datetime import datetime
 
 import pytz
 from linebot.v3.messaging import (ApiClient, ButtonsTemplate,
@@ -10,6 +9,7 @@ from linebot.v3.messaging import (ApiClient, ButtonsTemplate,
                                   TemplateMessage, TextMessage)
 
 from database.task_operations import create_task
+from utils.timer import get_line_datetime_string_format, to_local_datetime
 
 
 def reply_message(event, text, line_bot_configuration, app):
@@ -38,7 +38,7 @@ def reply_introduction_message(event, line_bot_configuration, app):
 
 def reply_datetime_picker_action_message(event, data, message, line_bot_configuration, app):
     with ApiClient(configuration=line_bot_configuration) as api_client:
-        datetime_picker_action = DatetimePickerAction(label="選擇日期和時間", data=data, mode="datetime", initial=datetime.now().strftime('%Y-%m-%dT%H:%M'))
+        datetime_picker_action = DatetimePickerAction(label="選擇日期和時間", data=data, mode="datetime", initial=get_line_datetime_string_format(event.timestamp))
         line_bot_api = MessagingApi(api_client)
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
@@ -113,11 +113,7 @@ def get_flex_message_content_template(task):
     with open('handlers/task_created_flex_template.json', 'r', encoding='utf-8') as f:
         flex_message_content = json.load(f)
         flex_message_content["body"]["contents"][1]["text"] = task['message']
-        flex_message_content["body"]["contents"][1]["text"] = task['message']
-        if task['expireDate']:
-            utc_8 = pytz.timezone('Asia/Taipei')
-            task['expireDate'] = task['expireDate'].astimezone(utc_8)
-        flex_message_content["body"]["contents"][2]["text"] = task['expireDate'].strftime('%Y-%m-%d %H:%M') if task['expireDate'] else "未設定"
+        flex_message_content["body"]["contents"][2]["text"] = to_local_datetime(task['expireDate']).strftime('%Y-%m-%d %H:%M') if task['expireDate'] else "未設定"
         flex_message_content["body"]["contents"][4]["contents"][1]["text"] = task['id']
 
     return flex_message_content

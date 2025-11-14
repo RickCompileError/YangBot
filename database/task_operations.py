@@ -105,8 +105,7 @@ def get_notify_tasks():
 
     :return: List of task dictionaries
     """
-    utc_8 = pytz.timezone('Asia/Taipei')
-    one_day_from_now = datetime.now(utc_8) + timedelta(days=1)
+    one_day_from_now = datetime.now() + timedelta(days=1)
     one_day_minus_one_minute = one_day_from_now - timedelta(minutes=1)
 
     tasks_ref = db.collection(COLLECTION_NAME)
