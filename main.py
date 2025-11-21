@@ -5,9 +5,10 @@ from linebot.v3.messaging import Configuration
 from linebot.v3.webhooks import MessageEvent, PostbackEvent, TextMessageContent
 
 from database.task_operations import get_notify_tasks, update_task
-from handlers.message_handlers import (handle_tag_bot_message,
-                                       send_notification_push_message)
-from handlers.postback_handlers import handle_set_task_datetime_postback
+from handlers.message_handlers import (build_notification_message,
+                                       handle_tag_bot_message, push_message)
+from handlers.postback_handlers import (handle_expire_date_postback,
+                                        handle_notify_date_postback)
 from utils.config import get_settings
 
 app = Flask(__name__)
@@ -48,8 +49,13 @@ def handle_message(event):
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
-    if event.postback.data.startswith("taskId="):
-        return handle_set_task_datetime_postback(event, line_bot_configuration, app)
+    postback_data: str = event.postback.data
+
+    if postback_data.startswith("taskId=") and 'expireDate' in postback_data:
+        return handle_expire_date_postback(event, line_bot_configuration, app)
+
+    if postback_data.startswith("taskId=") and 'notifyDate' in postback_data:
+        return handle_notify_date_postback(event, line_bot_configuration, app)
 
 @app.route("/notify_check", methods=['GET'])
 def notify_check():
@@ -60,7 +66,12 @@ def notify_check():
         return 'No tasks to notify.'
 
     for task in tasks:
-        state = send_notification_push_message(task, line_bot_configuration)
+        notification_message = build_notification_message(task)
+        state = push_message(
+            line_bot_configuration=line_bot_configuration,
+            to=task['notifiedId'],
+            messages=[notification_message]
+        )
         if state == 'OK':
             update_task(task['id'], {'isNotified': True})
 

@@ -53,7 +53,7 @@ def update_task(task_id, updates):
     """
     try:
         # Validate that updates only include valid fields
-        valid_fields = {"message", "sourceId", "notifiedId", "isNotified", "expireDate"}
+        valid_fields = {"message", "sourceId", "notifiedId", "isNotified", "expireDate", "notifyDate"}
         filtered_updates = {k: v for k, v in updates.items() if k in valid_fields}
 
         if not filtered_updates:

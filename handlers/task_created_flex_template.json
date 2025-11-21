@@ -16,11 +16,19 @@
                 "text": "Default Message",
                 "weight": "bold",
                 "size": "xxl",
-                "margin": "md"
+                "margin": "md",
+                "wrap": true
             },
             {
                 "type": "text",
-                "text": "Default Time",
+                "text": "提醒時間",
+                "size": "xs",
+                "color": "#aaaaaa",
+                "wrap": true
+            },
+            {
+                "type": "text",
+                "text": "到期時間",
                 "size": "xs",
                 "color": "#aaaaaa",
                 "wrap": true
