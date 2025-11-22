@@ -1,7 +1,5 @@
 import json
-import logging
 
-import pytz
 from linebot.v3.messaging import (ApiClient, ButtonsTemplate, Configuration,
                                   DatetimePickerAction, FlexContainer,
                                   FlexMessage, Message, MessagingApi,

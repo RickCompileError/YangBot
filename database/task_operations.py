@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-import pytz
 from google.cloud import firestore
 
 from .firestore_init import db
@@ -101,18 +100,18 @@ def get_tasks_by_source_id(source_id):
 def get_notify_tasks():
     """
     Retrieve tasks that need notification (expireDate within next day and isNotified is False).
-    The timestamp range is from (now + 1 day - 1 minute) to (now + 1 day).
+    The timestamp range is from (now - 1 minute) to (now).
 
     :return: List of task dictionaries
     """
-    one_day_from_now = datetime.now() + timedelta(days=1)
-    one_day_minus_one_minute = one_day_from_now - timedelta(minutes=1)
+    now = datetime.now(timezone.utc)
+    one_minute_ago = now - timedelta(minutes=1)
 
     tasks_ref = db.collection(COLLECTION_NAME)
     results = tasks_ref.where(
-        filter=firestore.FieldFilter("expireDate", ">=", one_day_minus_one_minute)
+        filter=firestore.FieldFilter("notifyDate", ">=", one_minute_ago)
     ).where(
-        filter=firestore.FieldFilter("expireDate", "<", one_day_from_now)
+        filter=firestore.FieldFilter("notifyDate", "<=", now)
     ).where(
         filter=firestore.FieldFilter("isNotified", "==", False)
     ).stream()
