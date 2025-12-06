@@ -1,4 +1,5 @@
 import json
+from re import split
 
 from linebot.v3.messaging import (ApiClient, ButtonsTemplate, Configuration,
                                   DatetimePickerAction, FlexContainer,
@@ -6,6 +7,8 @@ from linebot.v3.messaging import (ApiClient, ButtonsTemplate, Configuration,
                                   PushMessageRequest, ReplyMessageRequest,
                                   TemplateMessage, TextMessage)
 
+from database.army_operations import (get_all_armies, get_army_by_user_id,
+                                      reset_state, set_state)
 from database.task_operations import create_task
 from utils.timer import get_line_datetime_string_format, to_local_datetime
 
@@ -22,6 +25,55 @@ def handle_tag_bot_message(event, split_text, line_bot_configuration, app):
         task_id = create_task(message, user_id, room_id, False, None)
         expire_datetime_picker_message = build_expire_datetime_picker_message(event.timestamp, task_id)
         return reply_message(line_bot_configuration, event.reply_token, [expire_datetime_picker_message])
+
+    # Handle "設定狀態" command, Ex. @botname 設定狀態 公司 工作
+    if split_text[1] == "設定狀態" and len(split_text) >= 3:
+        army = get_army_by_user_id(event.source.user_id)
+        set_state(army[0]['id'], *split_text[2:])
+        confirmation_text = f"已更新大兵 {army[0]['name']} 的狀態"
+        confirmation_message = TextMessage(text=confirmation_text)
+        return reply_message(line_bot_configuration, event.reply_token, [confirmation_message])
+
+    # Handle "放假" command, Ex. @botname 放假
+    if split_text[1] == "放假":
+        # TODO get the army
+        army = get_army_by_user_id(event.source.user_id)
+        vacation_message = build_vacation_message(army[0])
+        return reply_message(line_bot_configuration, event.reply_token, [vacation_message])
+
+    # Handle "收假" command, Ex. @botname 收假
+    if split_text[1] == "收假":
+        # TODO get the army
+        army = get_army_by_user_id(event.source.user_id)
+        return_message = build_return_army_message(army[0])
+        return reply_message(line_bot_configuration, event.reply_token, [return_message])
+
+    if split_text[1] == "重置回報":
+        armies = get_all_armies()
+        for army in armies:
+            reset_state(army['id'])
+        confirmation_text = "已重置所有人的狀態回報為預設值。"
+        confirmation_message = TextMessage(text=confirmation_text)
+        return reply_message(line_bot_configuration, event.reply_token, [confirmation_message])
+
+    if split_text[1] == "放假總結":
+        armies = get_all_armies()
+        messages = []
+        for army in armies:
+            messages.append(build_vacation_message(army).text)
+        summary_text = "第十班：\n\n" + "\n\n".join(messages)
+        summary_message = TextMessage(text=summary_text)
+        return reply_message(line_bot_configuration, event.reply_token, [summary_message])
+    
+    if split_text[1] == "收假總結":
+        armies = get_all_armies()
+        messages = []
+        for army in armies:
+            messages.append(build_return_army_message(army).text)
+        summary_text = "第十班：\n\n" + "\n\n".join(messages)
+        summary_message = TextMessage(text=summary_text)
+        return reply_message(line_bot_configuration, event.reply_token, [summary_message])
+    
 
 def get_group_or_room_id(source):
     if source.type == "group":
@@ -40,6 +92,26 @@ def reply_introduction_message(event, line_bot_configuration, app):
     )
 
     return reply_message(line_bot_configuration, event.reply_token, [TextMessage(text=introduction_text)])
+
+def build_vacation_message(army) -> TextMessage:
+    vacation_text = f"""放假日回報（1800-1900）
+{army['Id']} {army['name']}
+地點：{army['place']}
+做什麼：{army['action']}
+有無飲酒：無
+自己電話：{army['phone']}"""
+    return TextMessage(text=vacation_text)
+
+def build_return_army_message(army) -> TextMessage:
+    return_text = f"""收假日回報（1100-1200）
+{army['Id']} {army['name']}
+地點：{army['place']}
+做什麼：{army['action']}
+有無飲酒：無
+自己電話：{army['phone']}
+返營方式：{army['returnMethod']}
+預計返營(抵達)時間：{army['returnTime']}"""
+    return TextMessage(text=return_text)
 
 def build_expire_datetime_picker_message(timestamp: float, task_id: str) -> TemplateMessage:
     current_time = get_line_datetime_string_format(timestamp)
