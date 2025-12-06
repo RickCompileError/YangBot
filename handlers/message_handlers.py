@@ -73,6 +73,10 @@ def handle_tag_bot_message(event, split_text, line_bot_configuration, app):
         summary_text = "第十班：\n\n" + "\n\n".join(messages)
         summary_message = TextMessage(text=summary_text)
         return reply_message(line_bot_configuration, event.reply_token, [summary_message])
+
+    if split_text[1] == "大兵登記":
+        user_id_message = TextMessage(text=f"你的用戶ID是: {event.source.user_id}，請將此ID提供給管理員進行大兵資料登記。")
+        return reply_message(line_bot_configuration, event.reply_token, [user_id_message])
     
 
 def get_group_or_room_id(source):
@@ -83,13 +87,31 @@ def get_group_or_room_id(source):
     return None
 
 def reply_introduction_message(event, line_bot_configuration, app):
-    introduction_text = (
-        "你好！我是家庭小幫手 YangBot 🤖。\n"
-        "你可以在群組或聊天室中標註我，並使用以下指令來設定提醒：\n"
-        "@YangBot 提醒 <你的提醒事項>\n"
-        "例如：@YangBot 提醒 買牛奶\n"
-        "我會幫你設定一個提醒，並讓你選擇提醒的日期和時間。"
-    )
+    # introduction_text = (
+    #     "你好！我是家庭小幫手 YangBot 🤖。\n"
+    #     "你可以在群組或聊天室中標註我，並使用以下指令來設定提醒：\n"
+    #     "@YangBot 提醒 <你的提醒事項>\n"
+    #     "例如：@YangBot 提醒 買牛奶\n"
+    #     "我會幫你設定一個提醒，並讓你選擇提醒的日期和時間。"
+    # )
+    introduction_text = """📌 LINE Bot 功能總覽
+
+🔸@YangBot 提醒 <事項>：建立提醒並在時間到時通知
+
+🔸@YangBot 設定狀態 <地點> <做什麼> <返營方式> <預計抵達時間>
+👉 四個欄位為固定順序，需依序填寫，沒填滿則套用預設值
+
+🔸@YangBot 放假：顯示大兵放假資訊
+
+🔸@YangBot 收假：顯示大兵收假資訊
+
+🔸@YangBot 放假總結：查看全體放假狀態
+
+🔸@YangBot 收假總結：查看全體收假狀態
+
+🔸@YangBot 重置回報：重置所有大兵收放假資料
+
+🔸@YangBot 大兵登記：管理員提供 ID 建立大兵資料"""
 
     return reply_message(line_bot_configuration, event.reply_token, [TextMessage(text=introduction_text)])
 
