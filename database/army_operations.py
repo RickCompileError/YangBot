@@ -24,7 +24,7 @@ def reset_state(army_id):
             "action": "休息",
             "place": "家裡",
             "returnMethod": "車子",
-            "returnTime": "18:00"
+            "returnTime": "1800"
         }
         update_data(COLLECTION_NAME, army_id, updates)
         return True
