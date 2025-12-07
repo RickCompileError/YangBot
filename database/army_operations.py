@@ -42,8 +42,8 @@ def set_state(army_id, *args):
     try:
         # unpack args, value corresponds to action, place, returnMethod, returnTime, if length not enough, use default values
         updates = {
-            "action": args[0] if len(args) >= 1 else "休息",
-            "place": args[1] if len(args) >= 2 else "家裡",
+            "place": args[0] if len(args) >= 1 else "家裡",
+            "action": args[1] if len(args) >= 2 else "休息",
             "returnMethod": args[2] if len(args) >= 3 else "車子",
             "returnTime": args[3] if len(args) >= 4 else "18:00"
         }
