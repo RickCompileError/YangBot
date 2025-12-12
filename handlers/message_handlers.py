@@ -36,14 +36,12 @@ def handle_tag_bot_message(event, split_text, line_bot_configuration, app):
 
     # Handle "放假" command, Ex. @botname 放假
     if split_text[1] == "放假":
-        # TODO get the army
         army = get_army_by_user_id(event.source.user_id)
         vacation_message = build_vacation_message(army[0])
         return reply_message(line_bot_configuration, event.reply_token, [vacation_message])
 
     # Handle "收假" command, Ex. @botname 收假
     if split_text[1] == "收假":
-        # TODO get the army
         army = get_army_by_user_id(event.source.user_id)
         return_message = build_return_army_message(army[0])
         return reply_message(line_bot_configuration, event.reply_token, [return_message])
@@ -57,19 +55,29 @@ def handle_tag_bot_message(event, split_text, line_bot_configuration, app):
         return reply_message(line_bot_configuration, event.reply_token, [confirmation_message])
 
     if split_text[1] == "放假總結":
+        try:
+            report_time = 18 if len(split_text) < 3 else int(split_text[2])
+        except ValueError:
+            reply_text = "設定的回報時間只能是數字。"
+            reply_message(line_bot_configuration, event.reply_token, [TextMessage(text=reply_text)])
         armies = get_all_armies()
         messages = []
         for army in armies:
-            messages.append(build_vacation_message(army).text)
+            messages.append(build_vacation_message(army, report_time).text)
         summary_text = "第十班：\n\n" + "\n\n".join(messages)
         summary_message = TextMessage(text=summary_text)
         return reply_message(line_bot_configuration, event.reply_token, [summary_message])
     
     if split_text[1] == "收假總結":
+        try:
+            report_time = 11 if len(split_text) < 3 else int(split_text[2])
+        except ValueError:
+            reply_text = "設定的回報時間只能是數字。"
+            reply_message(line_bot_configuration, event.reply_token, [TextMessage(text=reply_text)])
         armies = get_all_armies()
         messages = []
         for army in armies:
-            messages.append(build_return_army_message(army).text)
+            messages.append(build_return_army_message(army, report_time).text)
         summary_text = "第十班：\n\n" + "\n\n".join(messages)
         summary_message = TextMessage(text=summary_text)
         return reply_message(line_bot_configuration, event.reply_token, [summary_message])
@@ -105,9 +113,9 @@ def reply_introduction_message(event, line_bot_configuration, app):
 
 🔸@YangBot 收假：顯示大兵收假資訊
 
-🔸@YangBot 放假總結：查看全體放假狀態
+🔸@YangBot 放假總結 <回報時間>：查看全體放假狀態，可輸入數字調整回報時間
 
-🔸@YangBot 收假總結：查看全體收假狀態
+🔸@YangBot 收假總結 <回報時間>：查看全體收假狀態，可輸入數字調整回報時間
 
 🔸@YangBot 重置回報：重置所有大兵收放假資料
 
@@ -115,8 +123,8 @@ def reply_introduction_message(event, line_bot_configuration, app):
 
     return reply_message(line_bot_configuration, event.reply_token, [TextMessage(text=introduction_text)])
 
-def build_vacation_message(army) -> TextMessage:
-    vacation_text = f"""放假日回報（1800-1900）
+def build_vacation_message(army, time = 18) -> TextMessage:
+    vacation_text = f"""放假日回報（{time}00-{time + 1}00）
 {army['Id']} {army['name']}
 地點：{army['place']}
 做什麼：{army['action']}
@@ -124,8 +132,8 @@ def build_vacation_message(army) -> TextMessage:
 自己電話：{army['phone']}"""
     return TextMessage(text=vacation_text)
 
-def build_return_army_message(army) -> TextMessage:
-    return_text = f"""收假日回報（1100-1200）
+def build_return_army_message(army, time = 11) -> TextMessage:
+    return_text = f"""收假日回報（{time}00-{time + 1}00）
 {army['Id']} {army['name']}
 地點：{army['place']}
 做什麼：{army['action']}
