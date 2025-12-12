@@ -31,7 +31,13 @@ def handle_tag_bot_message(event, split_text, line_bot_configuration, app):
     if split_text[1] == "設定狀態" and len(split_text) >= 3:
         army = get_army_by_user_id(event.source.user_id)
         set_state(army[0]['id'], *split_text[2:])
-        confirmation_text = f"已更新大兵 {army[0]['name']} 的狀態"
+        army = get_army_by_user_id(event.source.user_id)[0]
+        confirmation_text = f"""已更新大兵 {army['name']} 的狀態
+⚜️━━━━━━━━━━━━⚜️
+地點：{army['place']}
+做什麼：{army['action']}
+返營方式：{army['returnMethod']}
+預計返營(抵達)時間：{army['returnTime']}"""
         confirmation_message = TextMessage(text=confirmation_text)
         return reply_message(line_bot_configuration, event.reply_token, [confirmation_message])
 
@@ -109,22 +115,22 @@ def reply_introduction_message(event, line_bot_configuration, app):
     # )
     introduction_text = """📌 LINE Bot 功能總覽
 
-🔸@YangBot 提醒 <事項>：建立提醒並在時間到時通知
+🔸@楊家助手 提醒 <事項>：建立提醒並在時間到時通知
 
-🔸@YangBot 設定狀態 <地點> <做什麼> <返營方式> <預計抵達時間>
-👉 四個欄位為固定順序，需依序填寫，沒填滿則套用預設值
+🔸@楊家助手 設定狀態 <地點> <做什麼> <返營方式> <預計抵達時間>：
+四個欄位為固定順序，需依序填寫，沒填滿則套用預設值
 
-🔸@YangBot 放假：顯示大兵放假資訊
+🔸@楊家助手 放假：顯示大兵放假資訊
 
-🔸@YangBot 收假：顯示大兵收假資訊
+🔸@楊家助手 收假：顯示大兵收假資訊
 
-🔸@YangBot 放假總結 <回報時間>：查看全體放假狀態，可輸入數字調整回報時間
+🔸@楊家助手 放假總結 <回報時間>：查看全體放假狀態，可輸入數字調整回報時間
 
-🔸@YangBot 收假總結 <回報時間>：查看全體收假狀態，可輸入數字調整回報時間
+🔸@楊家助手 收假總結 <回報時間>：查看全體收假狀態，可輸入數字調整回報時間
 
-🔸@YangBot 重置回報：重置所有大兵收放假資料
+🔸@楊家助手 重置回報：重置所有大兵收放假資料
 
-🔸@YangBot 大兵登記：管理員提供 ID 建立大兵資料"""
+🔸@楊家助手 大兵登記：管理員提供 ID 建立大兵資料"""
 
     return reply_message(line_bot_configuration, event.reply_token, [TextMessage(text=introduction_text)])
 
