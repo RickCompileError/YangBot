@@ -1,5 +1,6 @@
 import json
 from re import split
+from typing import Text
 
 from linebot.v3.messaging import (ApiClient, ButtonsTemplate, Configuration,
                                   DatetimePickerAction, FlexContainer,
@@ -66,7 +67,9 @@ def handle_tag_bot_message(event, split_text, line_bot_configuration, app):
             messages.append(build_vacation_message(army, report_time).text)
         summary_text = "第十班：\n\n" + "\n\n".join(messages)
         summary_message = TextMessage(text=summary_text)
-        return reply_message(line_bot_configuration, event.reply_token, [summary_message])
+        reply_text = "已將放假總結私訊給你。"
+        reply_message(line_bot_configuration, event.reply_token, [TextMessage(text=reply_text)])
+        return push_message(line_bot_configuration, event.source.user_id, [summary_message])
     
     if split_text[1] == "收假總結":
         try:
@@ -80,7 +83,9 @@ def handle_tag_bot_message(event, split_text, line_bot_configuration, app):
             messages.append(build_return_army_message(army, report_time).text)
         summary_text = "第十班：\n\n" + "\n\n".join(messages)
         summary_message = TextMessage(text=summary_text)
-        return reply_message(line_bot_configuration, event.reply_token, [summary_message])
+        reply_text = "已將收假總結私訊給你。"
+        reply_message(line_bot_configuration, event.reply_token, [TextMessage(text=reply_text)])
+        return push_message(line_bot_configuration, event.source.user_id, [summary_message])
 
     if split_text[1] == "大兵登記":
         user_id_message = TextMessage(text=f"你的用戶ID是: {event.source.user_id}，請將此ID提供給管理員進行大兵資料登記。")
