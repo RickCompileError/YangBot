@@ -24,7 +24,8 @@ def reset_state(army_id):
             "action": "休息",
             "place": "家裡",
             "returnMethod": "車子",
-            "returnTime": "1800"
+            "returnTime": "1800",
+            "isReported": False
         }
         update_data(COLLECTION_NAME, army_id, updates)
         return True
@@ -45,7 +46,8 @@ def set_state(army_id, *args):
             "place": args[0] if len(args) >= 1 else "家裡",
             "action": args[1] if len(args) >= 2 else "休息",
             "returnMethod": args[2] if len(args) >= 3 else "車子",
-            "returnTime": args[3] if len(args) >= 4 else "18:00"
+            "returnTime": args[3] if len(args) >= 4 else "18:00",
+            "isReported": True
         }
         update_data(COLLECTION_NAME, army_id, updates)
         return True
@@ -70,3 +72,9 @@ def get_all_armies():
     """
     docs = db.collection(COLLECTION_NAME).order_by('Id').stream()
     return [{**doc.to_dict(), 'id': doc.id} for doc in docs]
+
+def get_armies_not_reported():
+    """
+    Retrieve Army documents where `isReported` is False or missing.
+    """
+    return query_data(COLLECTION_NAME, "isReported", "==", False)
