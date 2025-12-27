@@ -6,10 +6,12 @@ from linebot.v3.messaging import (ApiClient, ButtonsTemplate, Configuration,
                                   DatetimePickerAction, FlexContainer,
                                   FlexMessage, Message, MessagingApi,
                                   PushMessageRequest, ReplyMessageRequest,
-                                  TemplateMessage, TextMessage)
+                                  SubstitutionObject, TemplateMessage,
+                                  TextMessage, TextMessageV2)
 
-from database.army_operations import (get_all_armies, get_army_by_user_id,
-                                      reset_state, set_state)
+from database.army_operations import (get_all_armies, get_armies_not_reported,
+                                      get_army_by_user_id, reset_state,
+                                      set_state)
 from database.task_operations import create_task
 from utils.timer import get_line_datetime_string_format, to_local_datetime
 
@@ -93,9 +95,35 @@ def handle_tag_bot_message(event, split_text, line_bot_configuration, app):
         reply_message(line_bot_configuration, event.reply_token, [TextMessage(text=reply_text)])
         return push_message(line_bot_configuration, event.source.user_id, [summary_message])
 
+    if split_text[1] == "提醒回報":
+        armies = get_armies_not_reported()
+        if not armies:
+            reply_text = "所有人都已回報，無需提醒。"
+            return reply_message(line_bot_configuration, event.reply_token, [TextMessage(text=reply_text)])
+
+        mention_user_str = ""
+        substitution = {}
+        for i, army in enumerate(armies):
+        # for army in armies:
+            mention_user_str += '{' + str(i) + '} '
+            substitution_object = SubstitutionObject.from_dict({
+                "type": "mention",
+                "mentionee": {
+                    "type": "user",
+                    "userId": army['userId']
+                }
+            })
+            substitution[str(i)] = substitution_object
+
+        notify_text = f"提醒：{mention_user_str}尚未回報狀態"
+
+        return reply_message(line_bot_configuration, event.reply_token, [TextMessageV2(text=notify_text, substitution=substitution)])
+
     if split_text[1] == "大兵登記":
         user_id_message = TextMessage(text=f"你的用戶ID是: {event.source.user_id}，請將此ID提供給管理員進行大兵資料登記。")
         return reply_message(line_bot_configuration, event.reply_token, [user_id_message])
+
+    return reply_introduction_message(event, line_bot_configuration, app)
     
 
 def get_group_or_room_id(source):
@@ -129,6 +157,8 @@ def reply_introduction_message(event, line_bot_configuration, app):
 🔸@楊家助手 收假總結 <回報時間>：查看全體收假狀態，可輸入數字調整回報時間
 
 🔸@楊家助手 重置回報：重置所有大兵收放假資料
+
+🔸@楊家助手 提醒回報：提醒尚未回報狀態的大兵
 
 🔸@楊家助手 大兵登記：管理員提供 ID 建立大兵資料"""
 
